@@ -66,26 +66,23 @@ void step_cuda(int step, torch::Tensor img, torch::Tensor grad){
     // Add a second dimension for the colors
     const dim3 numBlocksWithColors(numBlocks,img.size(0));
 
+    // Create accessors
+    auto img_accessor = img.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>();
+    auto grad_accessor = grad.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>();
+
+    // The actual step
     switch(step%4){
         case 0:
-            lr_kernel_cuda<<<numBlocksWithColors,blockSize>>>(
-                img.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>(),
-                grad.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>());
+            lr_kernel_cuda<<<numBlocksWithColors,blockSize>>>(img_accessor, grad_accessor);
             break;
         case 1:
-            tb_kernel_cuda<<<numBlocksWithColors,blockSize>>>(
-                img.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>(),
-                grad.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>());
+            tb_kernel_cuda<<<numBlocksWithColors,blockSize>>>(img_accessor, grad_accessor);
             break;
         case 2:
-            rl_kernel_cuda<<<numBlocksWithColors,blockSize>>>(
-                img.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>(),
-                grad.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>());
+            rl_kernel_cuda<<<numBlocksWithColors,blockSize>>>(img_accessor, grad_accessor);
             break;
         default:
-            bt_kernel_cuda<<<numBlocksWithColors,blockSize>>>(
-                img.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>(),
-                grad.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>());
+            bt_kernel_cuda<<<numBlocksWithColors,blockSize>>>(img_accessor, grad_accessor);
             break;
     }
 }

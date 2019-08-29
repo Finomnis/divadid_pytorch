@@ -8,7 +8,7 @@ from src import GradientMap
 import torch
 
 # Enable CUDA
-dev = None #torch.device('cuda')
+dev = torch.device('cuda')
 print("Device:", dev)
 
 # Load Images
