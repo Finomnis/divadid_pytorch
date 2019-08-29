@@ -56,7 +56,7 @@ RECONSTRUCTION_FUNCTION(bt_kernel,{
 void step_cuda(int step, torch::Tensor img, torch::Tensor grad){
 
     // Compute wavefront size. This is the number of parallel workers we have.
-    // It is perpendicular to our walking direction, eg. the LR kernel has height as wavefront.
+    // It is perpendicular to our walking direction, eg. the LR kernel has the height 'img' as wavefront.
     const int wavefront_size = (step%2==0)?img.size(1):img.size(2);
 
     // Compute number of blocks from wavefront
