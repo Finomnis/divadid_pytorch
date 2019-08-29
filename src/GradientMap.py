@@ -9,10 +9,12 @@ import time
 
 # Load external cuda file
 script_path = os.path.dirname(os.path.realpath(__file__))
+print("Loading cuda kernels ... ", end = '')
 ext_cuda = load(name='ext_cuda', sources=[
     os.path.join(script_path, 'cuda', 'GradientMap.cpp'),
     os.path.join(script_path, 'cuda', 'GradientMap.cu'),
 ])
+print("done")
 
 
 class GradientMap:
@@ -72,38 +74,9 @@ class GradientMap:
         grad_self_y[replacement_stencil] = grad_other_y[replacement_stencil]
 
     def reconstruct(self, steps):
-        def step_lr():
-            ext_cuda.step(i, self.img, self.grad_x)
-            # for x in range(1, self.img.size(2) - 1):
-            #    self.img[:, 1:-1, x] = (self.img[:, 1:-1, x] + self.img[:, 1:-1, x - 1] + self.grad_x[:, 1:-1, x - 1]) / 2
-
-        def step_rl():
-            ext_cuda.step(i, self.img, self.grad_x)
-
-            #for x in range(self.img.size(2) - 2, 0, -1):
-            #    self.img[:, 1:-1, x] = (self.img[:, 1:-1, x] + self.img[:, 1:-1, x + 1] - self.grad_x[:, 1:-1, x]) / 2
-
-        def step_tb():
-            for y in range(1, self.img.size(1) - 1):
-                self.img[:, y, 1:-1] = (self.img[:, y, 1:-1] + self.img[:, y - 1, 1:-1] + self.grad_y[:, y - 1,
-                                                                                          1:-1]) / 2
-
-        def step_bt():
-            for y in range(self.img.size(1) - 2, 0, -1):
-                self.img[:, y, 1:-1] = (self.img[:, y, 1:-1] + self.img[:, y + 1, 1:-1] - self.grad_y[:, y, 1:-1]) / 2
-
-        timestamps = []
         for i in range(steps):
-            start = time.time()
-            if i % 4 == 0:
-                step_lr()
-            elif i % 4 == 1:
-                step_tb()
-            elif i % 4 == 2:
-                step_rl()
+            if i % 2 == 0:
+                ext_cuda.step(i, self.img, self.grad_x)
             else:
-                step_bt()
-            timestamps.append(int(10000 * (time.time() - start)))
-            if i % 4 == 3:
-                print(timestamps)
-                timestamps = []
+                ext_cuda.step(i, self.img, self.grad_y)
+

@@ -5,7 +5,12 @@
 
 #include <vector>
 
-
+// A macro to remove all the messy boilerplate code.
+// Defines the function name and sets up the convenience variables 'index', 'stride' and 'col'.
+// 'index' and 'stride' is a great design pattern that I will use always from now on, which i found in:
+// https://devblogs.nvidia.com/even-easier-introduction-cuda/
+// The amazing part is that you can change the block and dimension size without having to adjust the kernel,
+// for performance comparison. It will automatically adjust and still compute all the necessary data.
 #define RECONSTRUCTION_FUNCTION(name, code) \
 __global__ void name(\
     torch::PackedTensorAccessor<float,3,torch::RestrictPtrTraits,size_t> img,\
@@ -14,6 +19,7 @@ __global__ void name(\
     int stride = blockDim.x * gridDim.x;\
     int col = blockIdx.y;\
     code}
+
 
 RECONSTRUCTION_FUNCTION(lr_kernel,{
     for(int y = index+1; y < img.size(1)-1; y+=stride){
@@ -31,32 +37,56 @@ RECONSTRUCTION_FUNCTION(rl_kernel,{
     }
 })
 
+RECONSTRUCTION_FUNCTION(tb_kernel,{
+    for(int x = index+1; x < img.size(2)-1; x+=stride){
+        for(int y = 1; y < img.size(1)-1; y++){
+            img[col][y][x] = (img[col][y][x] + img[col][y-1][x] + grad_x[col][y-1][x]) / 2;
+        }
+    }
+})
+
+RECONSTRUCTION_FUNCTION(bt_kernel,{
+    for(int x = index+1; x < img.size(2)-1; x+=stride){
+        for(int y = img.size(1)-2; y > 0; y--){
+            img[col][y][x] = (img[col][y][x] + img[col][y+1][x] - grad_x[col][y][x]) / 2;
+        }
+    }
+})
+
 
 void step_cuda(int step, torch::Tensor img, torch::Tensor grad){
-    //const auto img_width = img.size(1)
-    // TODO dim3 to parallelize colors
-    dim3 num_blocks(4,3);
+
+    // Compute wavefront size. This is the number of parallel workers we have.
+    // It is perpendicular to our walking direction, eg. the LR kernel has height as wavefront.
+    const int wavefront_size = (step%2==0)?img.size(1):img.size(2);
+
+    // Compute number of blocks from wavefront
+    const int blockSize = 1024;
+    const int numBlocks = (wavefront_size + blockSize - 1) / blockSize;
+
+    // Add a second dimension for the colors
+    const dim3 numBlocksWithColors(numBlocks,img.size(0));
 
     switch(step%4){
-    case 0:
-        lr_kernel<<<num_blocks,1024>>>(
-            img.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>(),
-            grad.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>());
-        break;
-    case 1:
-        //tb_kernel<<<num_blocks,1024>>>(
-        //    img.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>(),
-        //    grad_x.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>());
-        break;
-    case 2:
-        rl_kernel<<<num_blocks,1024>>>(
-            img.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>(),
-            grad.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>());
-        break;
-    default:
-        //bt_kernel<<<num_blocks,1024>>>(
-        //    img.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>(),
-        //    grad_x.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>());
-        break;
+        case 0:
+            lr_kernel<<<numBlocksWithColors,blockSize>>>(
+                img.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>(),
+                grad.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>());
+            break;
+        case 1:
+            tb_kernel<<<numBlocksWithColors,blockSize>>>(
+                img.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>(),
+                grad.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>());
+            break;
+        case 2:
+            rl_kernel<<<numBlocksWithColors,blockSize>>>(
+                img.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>(),
+                grad.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>());
+            break;
+        default:
+            bt_kernel<<<numBlocksWithColors,blockSize>>>(
+                img.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>(),
+                grad.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>());
+            break;
     }
 }
