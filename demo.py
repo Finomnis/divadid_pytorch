@@ -7,24 +7,30 @@ from src import GradientMap
 
 import torch
 
+# Enable CUDA
 dev = torch.device('cuda')
-print(dev)
 
+# Load Images
 bg = Image.open('img/bg_large.jpeg')
 fg = Image.open('img/fg.jpg')
 
+# Compute Gradient Maps
 bg_grad = GradientMap.from_image(bg, device=dev)
 fg_grad = GradientMap.from_image(fg, device=dev)
 
+# Insert foreground gradient into background
+bg_grad.paste_gradient(fg_grad, 10, 10)
 
-bg_grad.paste_gradient(fg_grad, 0, 0)
-
-num_iters = 100
-
+# COMPUTE
 start = time()
+
+num_iters = 10000
 bg_grad.reconstruct(num_iters)
+img = bg_grad.get_image()
+
 duration = time() - start
-
 print("Speed:", num_iters/duration, "iter/s")
+# COMPUTE DONE
 
-bg_grad.get_image().show()
+# Show output image
+img.show()
