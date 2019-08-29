@@ -3,7 +3,6 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
-#include <vector>
 
 // A macro to remove all the messy boilerplate code.
 // Defines the function name and sets up the convenience variables 'index', 'stride' and 'col'.
@@ -12,7 +11,7 @@
 // The amazing part is that you can change the block and dimension size without having to adjust the kernel,
 // for performance comparison. It will automatically adjust and still compute all the necessary data.
 #define RECONSTRUCTION_FUNCTION(name, code) \
-__global__ void name(\
+__global__ void name ## _cuda(\
     torch::PackedTensorAccessor<float,3,torch::RestrictPtrTraits,size_t> img,\
     const torch::PackedTensorAccessor<float,3,torch::RestrictPtrTraits,size_t>  grad_x){\
     int index = blockIdx.x * blockDim.x + threadIdx.x;\
@@ -69,22 +68,22 @@ void step_cuda(int step, torch::Tensor img, torch::Tensor grad){
 
     switch(step%4){
         case 0:
-            lr_kernel<<<numBlocksWithColors,blockSize>>>(
+            lr_kernel_cuda<<<numBlocksWithColors,blockSize>>>(
                 img.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>(),
                 grad.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>());
             break;
         case 1:
-            tb_kernel<<<numBlocksWithColors,blockSize>>>(
+            tb_kernel_cuda<<<numBlocksWithColors,blockSize>>>(
                 img.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>(),
                 grad.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>());
             break;
         case 2:
-            rl_kernel<<<numBlocksWithColors,blockSize>>>(
+            rl_kernel_cuda<<<numBlocksWithColors,blockSize>>>(
                 img.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>(),
                 grad.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>());
             break;
         default:
-            bt_kernel<<<numBlocksWithColors,blockSize>>>(
+            bt_kernel_cuda<<<numBlocksWithColors,blockSize>>>(
                 img.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>(),
                 grad.packed_accessor<float,3,torch::RestrictPtrTraits,size_t>());
             break;

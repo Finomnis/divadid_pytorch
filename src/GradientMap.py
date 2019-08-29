@@ -9,10 +9,11 @@ import time
 
 # Load external cuda file
 script_path = os.path.dirname(os.path.realpath(__file__))
-print("Loading cuda kernels ... ", end = '')
+print("Loading compute kernels ... ", end = '')
 ext_cuda = load(name='ext_cuda', sources=[
     os.path.join(script_path, 'cuda', 'GradientMap.cpp'),
-    os.path.join(script_path, 'cuda', 'GradientMap.cu'),
+    os.path.join(script_path, 'cuda', 'GradientMap_cuda.cu'),
+    os.path.join(script_path, 'cuda', 'GradientMap_cpu.cpp'),
 ])
 print("done")
 
