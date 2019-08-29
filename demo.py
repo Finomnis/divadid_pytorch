@@ -46,7 +46,7 @@ img = bg_grad.get_image()
 
 duration = time() - start
 print("done")
-print("Speed:", num_iters/duration, "iter/s")
+print("Speed:", int(100*num_iters/duration)/100, "iter/s")
 
 # Show output image
 img.show()
