@@ -11,7 +11,7 @@ import time
 
 
 # Enable CUDA
-dev = None #torch.device('cuda')
+dev = torch.device('cuda')
 print("Device:", dev)
 if dev is not None and dev.type == 'cuda':
     print("Initializing CUDA ... ", end=''); sys.stdout.flush()
@@ -19,6 +19,9 @@ if dev is not None and dev.type == 'cuda':
     # the timing of the prints.
     torch.Tensor([]).to(device=dev)
     print("done")
+    cuda = True
+else:
+    cuda = False
 
 # Load Images
 print("Opening images ... ", end=''); sys.stdout.flush()
@@ -39,15 +42,18 @@ print("done")
 
 # COMPUTE
 print("Reconstruction ... ", end=''); sys.stdout.flush()
+num_iters = 1000
+
 start = time.time()
 
-num_iters = 10000
 bg_grad.reconstruct(num_iters)
-img = bg_grad.get_image()
 
+if cuda:
+    torch.cuda.synchronize()
 duration = time.time() - start
+
 print("done")
 print("Speed:", int(100*num_iters/duration)/100, "iter/s")
 
 # Show output image
-img.show()
+bg_grad.get_image().show()
