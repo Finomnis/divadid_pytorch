@@ -9,7 +9,8 @@ import sys
 import time
 
 # Enable CUDA
-dev = torch.device('cuda')
+if torch.cuda.is_available():
+    dev = torch.device('cuda')
 print("Device:", dev)
 if dev is not None and dev.type == 'cuda':
     print("Initializing CUDA ... ", end=''); sys.stdout.flush()

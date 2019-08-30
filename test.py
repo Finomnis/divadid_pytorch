@@ -12,7 +12,8 @@ import sys
 num_iters = 1000
 
 # Enable CUDA
-dev = torch.device('cuda')
+if torch.cuda.is_available():
+    dev = torch.device('cuda')
 if dev is None or dev.type != 'cuda':
     print("No cuda device found. CUDA test is disabled.")
     use_cuda=False
