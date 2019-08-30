@@ -56,8 +56,21 @@ class GradientMap:
 
         return GradientMap(img, grad_x, grad_y)
 
+    @staticmethod
+    def from_tensor(data):
+        if len(data.shape) < 3:
+            data = data.unsqueeze(0)
+
+        grad_x = data[:, :, 1:] - data[:, :, :-1]
+        grad_y = data[:, 1:, :] - data[:, :-1, :]
+
+        return GradientMap(data, grad_x, grad_y)
+
     def get_image(self):
         return transforms.ToPILImage()(self.img.cpu().clamp(0, 1))
+
+    def get_tensor(self):
+        return self.img
 
     def paste_gradient(self, other, x, y, boost=1.0):
         """Inserts a given gradient at position x,y into self."""

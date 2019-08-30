@@ -4,6 +4,7 @@ from src import GradientMap
 
 from PIL import Image
 import torch.cuda
+from torchvision import transforms
 import numpy as np
 
 import sys
@@ -40,7 +41,7 @@ print("done")
 if use_cuda:
     print("Computing CUDA results ... ", end=''); sys.stdout.flush()
     bg_grad = GradientMap.from_image(bg, device=dev)
-    fg_grad = GradientMap.from_image(fg, device=dev)
+    fg_grad = GradientMap.from_tensor(transforms.ToTensor()(np.asarray(fg)).to(device=dev))
     bg_grad.paste_gradient(fg_grad, -20, -20)
     bg_grad.reconstruct(num_iters)
     result_cuda = bg_grad.get_image()
