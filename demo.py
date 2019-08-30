@@ -24,7 +24,7 @@ else:
 # Load Images
 print("Opening images ... ", end=''); sys.stdout.flush()
 bg = Image.open('img/bg_large.jpeg')
-fg = Image.open('img/fg.jpg')
+fg = Image.open('img/fg.png')
 print("done")
 
 # Compute Gradient Maps
