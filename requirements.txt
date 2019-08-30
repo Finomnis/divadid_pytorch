@@ -5,4 +5,5 @@ torchvision
 
 # Further:
 #  - libpython-dev
+#  - ninja-build
 #  - CUDA dev toolkit
