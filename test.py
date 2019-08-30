@@ -47,17 +47,29 @@ if use_cuda:
 # Load Reference result
 result_reference = Image.open('img/result_1000.png')
 
+# Init exit state
+exit_state = 0
+print()
+
 # Compare CPU and Reference
 if not np.array_equal(np.asarray(result_reference), np.asarray(result_cpu)):
-    print("CPU result differs from reference!")
-    exit(1)
+    print("ERROR: CPU result differs from reference!")
+    exit_state = 1
 else:
     print("CPU result is correct.")
 
 # Compare CUDA and CPU
 if use_cuda:
+    if not np.array_equal(np.asarray(result_cuda), np.asarray(result_reference)):
+        print("ERROR: GPU result differs from reference!")
+        exit_state = 1
+    else:
+        print("GPU result is correct.")
+
     if not np.array_equal(np.asarray(result_cuda), np.asarray(result_cpu)):
-        print("CPU and GPU results differ!")
-        exit(1)
+        print("ERROR: CPU and GPU results differ!")
+        exit_state = 1
     else:
         print("CPU and GPU results are equal.")
+
+exit(exit_state)
