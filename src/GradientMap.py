@@ -11,7 +11,7 @@ import sys
 script_path = os.path.dirname(os.path.realpath(__file__))
 print("Loading compute kernels ... ", end='')
 sys.stdout.flush()
-ext_cuda = load(name='ext_cuda', sources=[
+ext_cuda = load(name='ext_cuda', extra_cflags=['-O3'], sources=[
     os.path.join(script_path, 'cuda', 'GradientMap.cpp'),
     os.path.join(script_path, 'cuda', 'GradientMap_cuda.cu'),
     os.path.join(script_path, 'cuda', 'GradientMap_cpu.cpp'),
@@ -98,7 +98,12 @@ class GradientMap:
 
     def reconstruct(self, steps):
         for i in range(steps):
+            #import time
+            #start = time.time()
             if i % 2 == 0:
                 ext_cuda.step(i, self.img, self.grad_x)
             else:
                 ext_cuda.step(i, self.img, self.grad_y)
+            #duration = time.time() - start
+            #print(i%4, ":", int(duration*1e6*100)/100)
+

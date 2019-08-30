@@ -10,18 +10,18 @@ import sys
 
 
 # Enable CUDA
-dev = torch.device('cuda')
+dev = None #torch.device('cuda')
 print("Device:", dev)
-if dev.type == 'cuda':
+if dev is not None and dev.type == 'cuda':
     print("Initializing CUDA ... ", end=''); sys.stdout.flush()
-    # Initializing CUDA shouldn't be done manually. Here, it is done for aesthetic reasons, as it would mess up
+    # Initializing CUDA shouldn't be done manually. It is only done here for aesthetic reasons, as it would mess up
     # the timing of the prints.
     torch.Tensor([]).to(device=dev)
     print("done")
 
 # Load Images
 print("Opening images ... ", end=''); sys.stdout.flush()
-bg = Image.open('img/bg.jpg')
+bg = Image.open('img/bg_large.jpeg')
 fg = Image.open('img/fg.jpg')
 print("done")
 
