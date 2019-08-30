@@ -12,13 +12,14 @@ import sys
 num_iters = 1000
 
 # Enable CUDA
+use_cuda=False
 if torch.cuda.is_available():
     dev = torch.device('cuda')
-if dev is None or dev.type != 'cuda':
+    if dev.type == 'cuda':
+        use_cuda=True
+
+if not use_cuda:
     print("No cuda device found. CUDA test is disabled.")
-    use_cuda=False
-else:
-    use_cuda=True
 
 # Load Images
 print("Opening images ... ", end=''); sys.stdout.flush()

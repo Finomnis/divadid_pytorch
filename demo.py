@@ -9,18 +9,18 @@ import sys
 import time
 
 # Enable CUDA
+cuda = False
 if torch.cuda.is_available():
     dev = torch.device('cuda')
+    if dev.type == 'cuda':
+        cuda = True
+        # Initializing CUDA shouldn't be done manually.
+        # It is only done here for aesthetic reasons, as it would mess up
+        # the timing of the prints.
+        print("Initializing CUDA ... ", end=''); sys.stdout.flush()
+        torch.Tensor([]).to(device=dev)
+        print("done")
 print("Device:", dev)
-if dev is not None and dev.type == 'cuda':
-    print("Initializing CUDA ... ", end=''); sys.stdout.flush()
-    # Initializing CUDA shouldn't be done manually. It is only done here for aesthetic reasons, as it would mess up
-    # the timing of the prints.
-    torch.Tensor([]).to(device=dev)
-    print("done")
-    cuda = True
-else:
-    cuda = False
 
 # Load Images
 print("Opening images ... ", end=''); sys.stdout.flush()
