@@ -8,8 +8,6 @@ import torch.cuda
 import sys
 import time
 
-
-
 # Enable CUDA
 dev = torch.device('cuda')
 print("Device:", dev)

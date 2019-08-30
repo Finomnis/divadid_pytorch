@@ -98,12 +98,24 @@ class GradientMap:
 
     def reconstruct(self, steps):
         for i in range(steps):
-            #import time
-            #start = time.time()
+
+            # if self.img.is_cuda:
+            #     start = torch.cuda.Event(enable_timing=True)
+            #     end = torch.cuda.Event(enable_timing=True)
+            #     start.record()
+            # else:
+            #     import time
+            #     start = time.time()
+
             if i % 2 == 0:
                 ext_cuda.step(i, self.img, self.grad_x)
             else:
                 ext_cuda.step(i, self.img, self.grad_y)
-            #duration = time.time() - start
-            #print(i%4, ":", int(duration*1e6*100)/100)
 
+            # if self.img.is_cuda:
+            #     end.record()
+            #     torch.cuda.synchronize()
+            #     duration = start.elapsed_time(end) / 1000.0
+            # else:
+            #     duration = time.time() - start
+            # print(i%4, ":", int(duration*1e6*100)/100)
