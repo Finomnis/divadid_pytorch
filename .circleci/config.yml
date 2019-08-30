@@ -36,7 +36,7 @@ jobs:
       - run:
           name: install apt dependencies
           command: |
-            sudo apt install ninja-build
+            sudo apt install ninja-build nvidia-cuda-toolkit
 
 
       - run:
