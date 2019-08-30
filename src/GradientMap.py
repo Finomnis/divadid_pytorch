@@ -1,22 +1,36 @@
 from torchvision import transforms
 import torch.nn.functional
-from torch.utils.cpp_extension import load
+from torch.utils import cpp_extension
 
 import numpy as np
 
 import os
 import sys
 
-# Load external cuda file
-script_path = os.path.dirname(os.path.realpath(__file__))
-print("Loading compute kernels ... ", end='')
-sys.stdout.flush()
-ext_cuda = load(name='ext_cuda', extra_cflags=['-O3'], sources=[
-    os.path.join(script_path, 'cuda', 'GradientMap.cpp'),
-    os.path.join(script_path, 'cuda', 'GradientMap_cuda.cu'),
-    os.path.join(script_path, 'cuda', 'GradientMap_cpu.cpp'),
-])
-print("done")
+# Load external cpp files
+def load_ext_cpp():
+    script_path = os.path.dirname(os.path.realpath(__file__))
+
+    flags = ['-O3']
+    sources = [
+        os.path.join(script_path, 'cuda', 'GradientMap.cpp'),
+        os.path.join(script_path, 'cuda', 'GradientMap_cpu.cpp'),
+    ]
+
+    if torch.cuda.is_available():
+        flags.append('-DWITH_CUDA')
+        sources.append(os.path.join(script_path, 'cuda', 'GradientMap_cuda.cu'))
+        print("Loading compute kernels (with CUDA) ... ", end=''); sys.stdout.flush()
+    else:
+        print("Loading compute kernels (without CUDA) ... ", end=''); sys.stdout.flush()
+
+    external_module = cpp_extension.load(name='ext_cuda', extra_cflags=flags, sources=sources)
+
+    print("done")
+    return external_module
+
+
+ext_cpp = load_ext_cpp()
 
 
 class GradientMap:
@@ -53,7 +67,7 @@ class GradientMap:
         # Extract and pad
         grad_other_x = torch.nn.functional.pad(other.grad_x, [0, 1, 0, 0])
         grad_other_y = torch.nn.functional.pad(other.grad_y, [0, 0, 0, 1])
-        assert(grad_other_x.shape == grad_other_y.shape)
+        assert grad_other_x.shape == grad_other_y.shape
 
         # Cut grad_other for the first time, if x < 0 or y < 0
         if x < 0:
@@ -73,15 +87,15 @@ class GradientMap:
         # Possible, because they are both missing one row or column.
         grad_self_x = grad_self_x[:, :grad_self_y.size(1), :grad_self_y.size(2)]
         grad_self_y = grad_self_y[:, :grad_self_x.size(1), :grad_self_x.size(2)]
-        assert(grad_self_x.shape == grad_self_y.shape)
+        assert grad_self_x.shape == grad_self_y.shape
 
         # If grad_self is a different size than grad_other, this means we are on the right or bottom edge.
         # Then, cut grad_other again, this time on the right and bottom side
         grad_other_x = grad_other_x[:, :grad_self_y.size(1), :grad_self_x.size(2)]
         grad_other_y = grad_other_y[:, :grad_self_y.size(1), :grad_self_x.size(2)]
-        assert (grad_other_x.shape == grad_other_y.shape)
-        assert (grad_other_x.shape == grad_self_x.shape)
-        assert (grad_other_y.shape == grad_self_y.shape)
+        assert grad_other_x.shape == grad_other_y.shape
+        assert grad_other_x.shape == grad_self_x.shape
+        assert grad_other_y.shape == grad_self_y.shape
 
         # Apply boosting
         grad_other_x *= boost
@@ -108,9 +122,9 @@ class GradientMap:
             #     start = time.time()
 
             if i % 2 == 0:
-                ext_cuda.step(i, self.img, self.grad_x)
+                ext_cpp.step(i, self.img, self.grad_x)
             else:
-                ext_cuda.step(i, self.img, self.grad_y)
+                ext_cpp.step(i, self.img, self.grad_y)
 
             # if self.img.is_cuda:
             #     end.record()
