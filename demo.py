@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
-from time import time
-from PIL import Image
-
 from src import GradientMap
 
+from PIL import Image
 import torch.cuda
+
 import sys
+import time
+
 
 
 # Enable CUDA
@@ -38,13 +39,13 @@ print("done")
 
 # COMPUTE
 print("Reconstruction ... ", end=''); sys.stdout.flush()
-start = time()
+start = time.time()
 
 num_iters = 10000
 bg_grad.reconstruct(num_iters)
 img = bg_grad.get_image()
 
-duration = time() - start
+duration = time.time() - start
 print("done")
 print("Speed:", int(100*num_iters/duration)/100, "iter/s")
 
