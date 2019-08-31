@@ -63,7 +63,7 @@ void step_cuda(int step, torch::Tensor img, torch::Tensor grad){
     const int wavefront_size = (step%2==0)?img.size(1):img.size(2);
 
     // Compute number of blocks from wavefront
-    const int blockSize = 1024;
+    const int blockSize = 128;
     const int numBlocks = (wavefront_size + blockSize - 1) / blockSize;
 
     // Add a second dimension for the colors
