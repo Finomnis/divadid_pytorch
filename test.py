@@ -13,13 +13,14 @@ import sys
 num_iters = 1000
 
 # Enable CUDA
-use_cuda=False
+has_cuda = False
+dev = None
 if torch.cuda.is_available():
     dev = torch.device('cuda')
     if dev.type == 'cuda':
-        use_cuda=True
+        has_cuda = True
 
-if not use_cuda:
+if not has_cuda:
     print("No cuda device found. CUDA test is disabled.")
 
 # Load Images
@@ -38,7 +39,7 @@ result_cpu = bg_grad.get_image()
 print("done")
 
 # Compute CUDA result
-if use_cuda:
+if has_cuda:
     print("Computing CUDA results ... ", end=''); sys.stdout.flush()
     bg_grad = GradientMap.from_image(bg, device=dev)
     fg_grad = GradientMap.from_tensor(transforms.ToTensor()(np.asarray(fg)).to(device=dev))
@@ -62,7 +63,7 @@ else:
     print("CPU result is correct.")
 
 # Compare CUDA and CPU
-if use_cuda:
+if has_cuda:
     if not np.array_equal(np.asarray(result_cuda), np.asarray(result_reference)):
         print("ERROR: GPU result differs from reference!")
         exit_state = 1

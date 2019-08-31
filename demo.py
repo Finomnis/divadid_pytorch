@@ -9,11 +9,12 @@ import sys
 import time
 
 # Enable CUDA
-cuda = False
+has_cuda = False
+dev = None
 if torch.cuda.is_available():
     dev = torch.device('cuda')
     if dev.type == 'cuda':
-        cuda = True
+        has_cuda = True
         # Initializing CUDA shouldn't be done manually.
         # It is only done here for aesthetic reasons, as it would mess up
         # the timing of the prints.
@@ -47,7 +48,7 @@ start = time.time()
 
 bg_grad.reconstruct(num_iters)
 
-if cuda:
+if has_cuda:
     torch.cuda.synchronize()
 duration = time.time() - start
 
