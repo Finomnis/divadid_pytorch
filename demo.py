@@ -8,10 +8,13 @@ import torch.cuda
 import sys
 import time
 
+# Settings
+USE_CUDA = True
+
 # Enable CUDA
 has_cuda = False
 dev = None
-if torch.cuda.is_available():
+if torch.cuda.is_available() and USE_CUDA:
     dev = torch.device('cuda')
     if dev.type == 'cuda':
         has_cuda = True
