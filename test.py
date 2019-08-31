@@ -25,15 +25,17 @@ if not has_cuda:
 
 # Load Images
 print("Opening images ... ", end=''); sys.stdout.flush()
-bg = Image.open('img/bg.png')
-fg = Image.open('img/fg.png')
+# Foreground and background are switched. Combined with a negative offset, the pasted gradients overlap on all sides.
+# This tests all special cases I could think off. (eg. unrolling and border handling)
+fg = Image.open('img/bg.png')
+bg = Image.open('img/fg.png')
 print("done")
 
 # Compute CPU result
 print("Computing CPU results ... ", end=''); sys.stdout.flush()
 bg_grad = GradientMap.from_image(bg)
 fg_grad = GradientMap.from_image(fg)
-bg_grad.paste_gradient(fg_grad, -20, -20)
+bg_grad.paste_gradient(fg_grad, -30, -30)
 bg_grad.reconstruct(num_iters)
 result_cpu = bg_grad.get_image()
 print("done")
@@ -43,7 +45,7 @@ if has_cuda:
     print("Computing CUDA results ... ", end=''); sys.stdout.flush()
     bg_grad = GradientMap.from_image(bg, device=dev)
     fg_grad = GradientMap.from_tensor(transforms.ToTensor()(np.asarray(fg)).to(device=dev))
-    bg_grad.paste_gradient(fg_grad, -20, -20)
+    bg_grad.paste_gradient(fg_grad, -30, -30)
     bg_grad.reconstruct(num_iters)
     result_cuda = bg_grad.get_image()
     print("done")
@@ -61,6 +63,9 @@ if not np.array_equal(np.asarray(result_reference), np.asarray(result_cpu)):
     exit_state = 1
 else:
     print("CPU result is correct.")
+
+# result_cuda.show()
+# result_cpu.show()
 
 # Compare CUDA and CPU
 if has_cuda:
