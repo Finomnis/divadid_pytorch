@@ -25,32 +25,42 @@ __global__ void name ## _cuda(                                                  
 
 RECONSTRUCTION_FUNCTION(lr_kernel,{
     for(int y = index+1; y < img.size(1)-1; y+=stride){
+        scalar_t tmp = img[col][y][0];
         for(int x = 1; x < img.size(2)-1; x++){
-            img[col][y][x] = (img[col][y][x] + img[col][y][x - 1] + grad_x[col][y][x - 1]) / 2;
+            // In the CUDA version, grad_x is transposed to improve cache efficiency.
+            tmp = (img[col][y][x] + tmp + grad_x[col][x - 1][y]) / 2;
+            img[col][y][x] = tmp;
         }
     }
 })
 
 RECONSTRUCTION_FUNCTION(rl_kernel,{
     for(int y = index+1; y < img.size(1)-1; y+=stride){
+        scalar_t tmp = img[col][y][img.size(2)-1];
         for(int x = img.size(2)-2; x > 0; x--){
-            img[col][y][x] = (img[col][y][x] + img[col][y][x + 1] - grad_x[col][y][x]) / 2;
+            // In the CUDA version, grad_x is transposed to improve cache efficiency.
+            tmp = (img[col][y][x] + tmp - grad_x[col][x][y]) / 2;
+            img[col][y][x] = tmp;
         }
     }
 })
 
 RECONSTRUCTION_FUNCTION(tb_kernel,{
     for(int x = index+1; x < img.size(2)-1; x+=stride){
+        scalar_t tmp = img[col][0][x];
         for(int y = 1; y < img.size(1)-1; y++){
-            img[col][y][x] = (img[col][y][x] + img[col][y-1][x] + grad_x[col][y-1][x]) / 2;
+            tmp = (img[col][y][x] + tmp + grad_x[col][y-1][x]) / 2;
+            img[col][y][x] = tmp;
         }
     }
 })
 
 RECONSTRUCTION_FUNCTION(bt_kernel,{
     for(int x = index+1; x < img.size(2)-1; x+=stride){
+        scalar_t tmp = img[col][img.size(1)-1][x];
         for(int y = img.size(1)-2; y > 0; y--){
-            img[col][y][x] = (img[col][y][x] + img[col][y+1][x] - grad_x[col][y][x]) / 2;
+            tmp = (img[col][y][x] + tmp - grad_x[col][y][x]) / 2;
+            img[col][y][x] = tmp;
         }
     }
 })
